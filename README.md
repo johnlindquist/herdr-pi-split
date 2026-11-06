@@ -18,11 +18,15 @@ Try it once without installing: `pi -e git:github.com/johnlindquist/herdr-pi-spl
 
 ## Use
 
+Type `/split` and a space: Pi lists examples. Use **↑/↓** and **Tab** to insert one, then edit it. Dim text beside the cursor tells you what you can type next; it never becomes part of the command. `/split --help` shows the whole guide without opening a pane, even outside Herdr.
+
 | Type | What happens |
 |---|---|
 | `/split` | Pick where to branch (it starts on your latest message), press **Enter**. The new pane opens on the right with everything up to that point. |
-| `/split "Pricing idea"` | Same, and names the split. |
-| `/split focus on the test failures` | Writes a short handoff summary for that focus, so the split starts lean. The full history stays in its session tree. |
+| `/split "Test fixes"` | Same, and names the split. |
+| `/split Investigate the failing tests` | Writes a short handoff summary for that focus, so the split starts lean. The full history stays in its session tree. |
+| `/split "Test fixes" Investigate the failing tests` | Name and focus together. |
+| `/split --help` | The guide, with these examples. |
 | **Shift+Enter** in the picker | Split there and ask for a handoff focus. |
 | **ctrl+shift+alt+f** | Shortcut for `/split`. |
 
@@ -38,7 +42,7 @@ Set `HERDR_SPLIT_LAUNCHER` to start a different command than `pi`.
 
 ## Tested
 
-In an isolated Herdr 0.1.12 + Pi 1.5.0: `/split` + **Enter** opened a second Pi pane to the right, on a new session whose header links to the parent, with the conversation up to the chosen reply.
+In a real Pi 1.5.0 terminal: typing `/split` showed its usage hint, a space listed the five examples, **↓ Tab** inserted `"Test fixes"` with the hint `[optional handoff focus]`, and `/split --help` printed the guide. In an isolated Herdr 0.1.12 + Pi 1.5.0: `/split` + **Enter** opened a second Pi pane to the right, on a new session whose header links to the parent, with the conversation up to the chosen reply.
 
 Unit tests:
 

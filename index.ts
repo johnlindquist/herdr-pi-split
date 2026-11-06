@@ -14,6 +14,7 @@ import {
 } from "@earendil-works/pi-coding-agent";
 import { matchesKey, truncateToWidth, wrapTextWithAnsi } from "@earendil-works/pi-tui";
 import { appPaneCommand, openAppPane, resolveSplitParent, type SplitParent } from "./app-pane.ts";
+import { askHandoffFocus, installSplitGuidance, NAME_QUOTES, splitCompletions, splitHelp, SPLIT_USAGE } from "./guidance.ts";
 
 // ctrl+shift+alt+f: ctrl+shift+f is pi's built-in tui.altScreen.search and wins nothing by overriding it.
 const SPLIT_SHORTCUT = "ctrl+shift+alt+f";
@@ -166,8 +167,6 @@ async function runHerdr(exec: Exec, cwd: string, action: string, args: string[])
 	return result;
 }
 
-const NAME_QUOTES: Record<string, string> = { '"': '"', "'": "'", "\u201c": "\u201d", "\u2018": "\u2019" };
-
 /**
  * `/split ["name"] [handoff focus]`. Only a leading quoted name is tokenized;
  * the remainder stays verbatim so apostrophes and quotes in the focus need no escaping.
@@ -216,7 +215,7 @@ export async function pickSplitPoint(ctx: ExtensionContext): Promise<SplitChoice
 			undefined,
 			latestMessage?.id,
 		);
-		const hint = theme.fg("accent", "Split from…") + theme.fg("dim", "  Enter: split here · Shift+Enter: split with handoff");
+		const hint = theme.fg("accent", "Split from…") + theme.fg("dim", "  Enter: split here · Shift+Enter: summarize · Esc: cancel");
 		const handleInput = selector.handleInput.bind(selector);
 		return {
 			render: (width: number) => {
@@ -720,8 +719,13 @@ async function finishSplit(job: SplitJob): Promise<void> {
 
 export default function herdrSplitExtension(pi: ExtensionAPI): void {
 	let launching = false;
+	pi.on("session_start", (_event, ctx) => installSplitGuidance(ctx));
 
 	const splitIntoPane = async (ctx: ExtensionContext, rawArgs = ""): Promise<void> => {
+		if (["--help", "-h"].includes(rawArgs.trim())) {
+			ctx.ui.notify(splitHelp(SPLIT_SHORTCUT), "info");
+			return;
+		}
 		if (launching) {
 			ctx.ui.notify("A Herdr pane split is already starting", "warning");
 			return;
@@ -734,7 +738,7 @@ export default function herdrSplitExtension(pi: ExtensionAPI): void {
 		try {
 			request = parseSplitArgs(rawArgs);
 		} catch (error) {
-			ctx.ui.notify(`${displayError(error)}. Usage: /split ["name"] [handoff focus]`, "error");
+			ctx.ui.notify(`${displayError(error)}. Usage: ${SPLIT_USAGE}. Examples: /split --help`, "error");
 			return;
 		}
 		launching = true;
@@ -751,7 +755,7 @@ export default function herdrSplitExtension(pi: ExtensionAPI): void {
 			}
 			let focus = request.focus;
 			if (choice.handoff && focus === undefined) {
-				const typed = await ctx.ui.input("Handoff focus for the split", "Optional — Enter for a general handoff");
+				const typed = await askHandoffFocus(ctx);
 				if (typed === undefined) return;
 				focus = typed.trim();
 			}
@@ -786,8 +790,8 @@ export default function herdrSplitExtension(pi: ExtensionAPI): void {
 	};
 
 	pi.registerCommand("split", {
-		description:
-			'Split from any point in the session tree into a new Herdr pane. /split ["name"] [handoff focus]; without a quoted name, the split is named from the focus or the latest request. Shift+Enter in the tree also hands off.',
+		description: 'Continue from a message in a new Herdr pane. /split --help for examples.',
+		getArgumentCompletions: splitCompletions,
 		handler: (args, ctx) => splitIntoPane(ctx, args),
 	});
 	pi.registerShortcut(SPLIT_SHORTCUT, {

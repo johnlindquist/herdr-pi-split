@@ -1,13 +1,13 @@
 {
   "name": "herdr-pi-split",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "/split: fork the current Pi conversation into a new Herdr pane beside it.",
   "license": "MIT",
   "type": "module",
   "keywords": ["pi-package", "pi", "herdr"],
   "repository": {"type": "git", "url": "git+https://github.com/johnlindquist/herdr-pi-split.git"},
   "pi": {"extensions": ["./index.ts"]},
-  "files": ["index.ts", "app-pane.ts", "progress-pane.mjs", "handoff.md", "title.md", "README.md", "LICENSE"],
+  "files": ["index.ts", "guidance.ts", "app-pane.ts", "progress-pane.mjs", "handoff.md", "title.md", "README.md", "LICENSE"],
   "peerDependencies": {
     "@earendil-works/pi-ai": ">=1.4.0 <2",
     "@earendil-works/pi-coding-agent": ">=1.4.0 <2",
