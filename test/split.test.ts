@@ -5,7 +5,7 @@ import { join } from "node:path";
 import type { AssistantMessage, Message, Model, ToolResultMessage } from "@earendil-works/pi-ai";
 import { transformMessages } from "@earendil-works/pi-ai/api/transform-messages";
 import { buildSessionContext, convertToLlm, SessionManager } from "@earendil-works/pi-coding-agent";
-import { createDetachedSplit, pendingToolCalls } from "../index.ts";
+import { applyToSplit, createDetachedSplit, pendingToolCalls, SPLIT_NOTICE, SPLIT_NOTICE_TYPE } from "../index.ts";
 
 const dirs: string[] = [];
 afterEach(async () => {
@@ -115,5 +115,46 @@ describe("herdr-split pending tool calls", () => {
 		expect(pendingToolCalls(s.getBranch())).toEqual([{ id: "b", name: "bash" }]);
 		s.appendMessage(result("b"));
 		expect(pendingToolCalls(s.getBranch())).toEqual([]);
+	});
+});
+
+/** The text the model would see for a split, last message first. */
+function contextTexts(dir: string, sessionFile: string): string[] {
+	const child = SessionManager.open(sessionFile, dir, dir);
+	const llm = transformMessages(convertToLlm(buildSessionContext(child.getEntries(), child.getLeafId()).messages), model);
+	return llm.map(message => (typeof message.content === "string" ? message.content : message.content.map(block => (block.type === "text" ? block.text : "")).join("\n")));
+}
+
+describe("herdr-split notice", () => {
+	test("the notice names the split, the running conversation and what to avoid", () => {
+		expect(SPLIT_NOTICE).toContain("split from another conversation that is still running");
+		expect(SPLIT_NOTICE).toContain("Do not continue");
+		expect(SPLIT_NOTICE).toContain("probably still making changes");
+	});
+
+	test("a split ends with the notice, after a closed tool call, and the parent does not get it", async () => {
+		const dir = await mkdtemp(join(tmpdir(), "herdr-split-"));
+		dirs.push(dir);
+		const parent = SessionManager.create(dir, dir);
+		parent.appendMessage(user("refactor the booking flow"));
+		parent.appendMessage(call("running"));
+		const snapshot = await createDetachedSplit({ cwd: dir, sessionManager: parent }, { kind: "current" });
+		const texts = contextTexts(dir, snapshot.sessionFile);
+		expect(texts.at(-1)).toContain(SPLIT_NOTICE);
+		expect(orphanedResults(transformMessages(convertToLlm(buildSessionContext(SessionManager.open(snapshot.sessionFile, dir, dir).getEntries()).messages), model))).toEqual([]);
+		expect(parent.getEntries().some(entry => entry.type === "custom_message" && entry.customType === SPLIT_NOTICE_TYPE)).toBe(false);
+	});
+
+	test("a handoff keeps only its summary, so the notice is written again after it", async () => {
+		const dir = await mkdtemp(join(tmpdir(), "herdr-split-"));
+		dirs.push(dir);
+		const parent = SessionManager.create(dir, dir);
+		parent.appendMessage(user("refactor the booking flow"));
+		const snapshot = await createDetachedSplit({ cwd: dir, sessionManager: parent }, { kind: "current" });
+		applyToSplit(snapshot, dir, dir, { handoff: { summary: "## Goal\nReview the tests", tokensBefore: 10 } });
+		const texts = contextTexts(dir, snapshot.sessionFile);
+		expect(texts.at(-1)).toContain(SPLIT_NOTICE);
+		expect(texts.filter(text => text.includes(SPLIT_NOTICE)).length).toBe(1);
+		expect(texts.join("\n")).toContain("Review the tests");
 	});
 });

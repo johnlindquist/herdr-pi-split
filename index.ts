@@ -33,6 +33,15 @@ const MAX_TITLE_INPUT_CHARS = 4_000;
 
 const PROGRESS_PANE_SCRIPT = fileURLToPath(new URL("./progress-pane.mjs", import.meta.url));
 const HANDOFF_PROMPT = readFileSync(new URL("./handoff.md", import.meta.url), "utf8");
+/** What the split's agent is told at the end of its copied history. One home: notice.md. */
+export const SPLIT_NOTICE = readFileSync(new URL("./notice.md", import.meta.url), "utf8").trim();
+/** Custom entry type of the split notice, so it can be found on reload. */
+export const SPLIT_NOTICE_TYPE = "herdr-split-notice";
+
+/** End the split's context with the notice. Call again after anything that hides earlier entries (a handoff). */
+function appendSplitNotice(child: SessionManager): void {
+	child.appendCustomMessageEntry(SPLIT_NOTICE_TYPE, SPLIT_NOTICE, true);
+}
 const TITLE_PROMPT = readFileSync(new URL("./title.md", import.meta.url), "utf8");
 
 type ProgressStep = "handoff" | "naming" | "opening";
@@ -300,6 +309,8 @@ export async function createDetachedSplit(
 			};
 			child.appendMessage(aborted);
 		}
+		// The copied history reads like work in progress. Say whose work it is before the agent acts.
+		appendSplitNotice(child);
 		if (name) child.appendSessionInfo(name);
 		return { sessionFile: childFile, sessionId: child.getSessionId() };
 	} catch (error) {
@@ -441,7 +452,11 @@ export function applyToSplit(
 ): void {
 	if (!changes.handoff && !changes.name) return;
 	const child = SessionManager.open(snapshot.sessionFile, sessionDir, cwd);
-	if (changes.handoff) child.appendCompaction(changes.handoff.summary, null, changes.handoff.tokensBefore, undefined, true);
+	if (changes.handoff) {
+		child.appendCompaction(changes.handoff.summary, null, changes.handoff.tokensBefore, undefined, true);
+		// The handoff keeps only its summary, so the notice written at the split is gone from context.
+		appendSplitNotice(child);
+	}
 	if (changes.name) child.appendSessionInfo(changes.name);
 }
 

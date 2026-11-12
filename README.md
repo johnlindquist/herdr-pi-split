@@ -35,6 +35,7 @@ Without a name, the split is titled from your latest request on that branch.
 ## How it works
 
 - **Fork:** the session up to the chosen entry is copied into a new session file (its header links back to the parent). Tool calls left unanswered at the split point get a "not executed in this split" result in the copy only; your live session is never changed.
+- **Notice:** the split's history ends with a short message to its agent: this conversation was split from another one that is still running, so do not continue the earlier work, expect the other conversation to be changing files, and act only on what you ask next. After a handoff the notice follows the summary. The wording lives in `notice.md`.
 - **Pane:** `/split` finds the Herdr pane running this Pi and asks Herdr to split it to the right, starting `pi --session <new file>` in the same working directory. If it can't find the pane, it tells you instead of guessing another one.
 - **Handoff and title:** made with your current model. If no model is available, the split still opens with the full history and asks you to `/name` it.
 
