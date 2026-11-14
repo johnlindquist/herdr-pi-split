@@ -1,6 +1,6 @@
 {
   "name": "herdr-pi-split",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "/split: fork the current Pi conversation into a new Herdr pane beside it.",
   "license": "MIT",
   "type": "module",
@@ -12,6 +12,11 @@
     "@earendil-works/pi-ai": ">=1.4.0 <2",
     "@earendil-works/pi-coding-agent": ">=1.4.0 <2",
     "@earendil-works/pi-tui": ">=1.4.0 <2"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-ai": "^1.5.0",
+    "@earendil-works/pi-coding-agent": "^1.5.0",
+    "@earendil-works/pi-tui": "^1.5.0"
   },
   "scripts": {"test": "bun test"}
 }

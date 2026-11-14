@@ -5,22 +5,23 @@ export const SPLIT_USAGE = '/split ["name"] [handoff focus]';
 export const NAME_QUOTES: Record<string, string> = { '"': '"', "'": "'", "“": "”", "‘": "’" };
 const nameExample = '"Test fixes"';
 const focusExample = "Investigate the failing tests";
-const examples: AutocompleteItem[] = [
-	{ value: "", label: "Pick a message", description: "Copy history through that message" },
-	{ value: nameExample, label: nameExample, description: "Give the new session a name" },
-	{ value: focusExample, label: focusExample, description: "Start with a focused summary" },
-	{ value: `${nameExample} ${focusExample}`, label: "Name + focus", description: "Name the session and request a summary" },
-	{ value: "--help", label: "--help", description: "Show examples without opening a pane" },
+/** `guide` is the wording of the line in `/split --help`; `description` is the note in the examples menu. */
+const examples: (AutocompleteItem & { guide: string })[] = [
+	{ value: "", label: "Pick a message", description: "Copy history through that message", guide: "pick a message, copy history through it" },
+	{ value: nameExample, label: nameExample, description: "Give the new session a name", guide: "name the new session" },
+	{ value: focusExample, label: focusExample, description: "Start with a focused summary", guide: "start from a short summary for that focus" },
+	{ value: `${nameExample} ${focusExample}`, label: "Name + focus", description: "Name the session and request a summary", guide: "name and focus together" },
+	{ value: "--help", label: "--help", description: "Show the guide", guide: "show this guide" },
 ];
 
 export function splitHelp(shortcut: string): string {
 	return [
-		"Split a conversation in Herdr",
+		"Split a conversation into a new Herdr pane",
 		"Run /split, choose a message, then press Enter. A new Pi pane opens on the right with the conversation up to that message. The original session stays unchanged.",
 		"",
-		...examples.map(item => `/split${item.value ? ` ${item.value}` : ""}  —  ${item.description}`),
+		...examples.map(item => `/split${item.value ? ` ${item.value}` : ""} — ${item.guide}`),
 		"",
-		"The picker starts at the newest user message or reply on this branch. Use ↑/↓ or type to search. Esc cancels. Shift+Enter asks what the new session should focus on; leave it blank for a general summary.",
+		"The message search opens in the pane where you ran /split. It starts at the newest user message or reply on this branch. Use ↑/↓ or type to search. Esc cancels. Shift+Enter asks what the new session should focus on; leave it blank for a general summary.",
 		"Quote only the name. Unquoted text asks your current model for a handoff: a summary to start from, with the history still in the tree. If the summary fails, the fork opens with its history instead.",
 		"No quoted name? Pi names a focused handoff from its focus; otherwise it keeps the branch name or uses its latest request.",
 		`Shortcut: ${shortcut}. Type a space after /split for examples; use ↑/↓ and Tab to insert one and edit it.`,
@@ -56,7 +57,7 @@ export function splitHint(text: string): string | undefined {
 	if (quote) {
 		const end = args.indexOf(quote, 1);
 		if (end < 0) return `Close the name with ${quote}`;
-		if (!args.slice(end + 1).trim()) return "[optional handoff focus]";
+		if (!args.slice(end + 1).trim()) return "[handoff focus]";
 	}
 	return "Pick a message to summarize";
 }

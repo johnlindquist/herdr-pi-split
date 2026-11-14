@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { openAppPane, resolveSplitParent } from "../app-pane.ts";
+import { MISSING_TOOL, NOT_IN_HERDR, openAppPane, resolveSplitParent } from "../app-pane.ts";
 
 const ok = (data: unknown) => ({ stdout: JSON.stringify(data), stderr: "", code: 0, killed: false });
 const terminal = { terminal: "t7", pane: "parent" };
@@ -48,4 +48,12 @@ test("split failures never retry against focus or accept the parent as the child
 		expect(calls[0].slice(0, 3)).toEqual(["herdr-app", "do", "pane.split"]);
 		expect(JSON.parse(calls[0][3])).toMatchObject({ pane: "parent", direction: "right" });
 	}
+});
+
+test("outside Herdr, and without Herdr's tools, the reason is said plainly and nothing is split", async () => {
+	await expect(resolveSplitParent(() => { throw new Error("unexpected lookup"); }, "/", {})).rejects.toThrow(NOT_IN_HERDR);
+	expect(NOT_IN_HERDR).toContain("/split --help works anywhere");
+	const missing: ExtensionAPI["exec"] = async () => ({ stdout: "", stderr: "spawn hc ENOENT", code: 1, killed: false });
+	await expect(resolveSplitParent(missing, "/", { HC_TERMINAL_ID: "t7" })).rejects.toThrow(MISSING_TOOL("hc"));
+	expect(MISSING_TOOL("hc")).toContain("hc and herdr-app");
 });

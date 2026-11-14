@@ -6,15 +6,22 @@ export type SplitParent = { backend: "app" | "legacy"; pane: string };
 
 async function run(exec: Exec, command: string, args: string[], cwd: string): Promise<string> {
 	const result = await exec(command, args, { cwd, timeout: 30_000 });
+	// Pi reports a missing executable as a failed run whose stderr is the spawn error.
+	if (result.code !== 0 && /\bENOENT\b/.test(result.stderr)) throw new Error(MISSING_TOOL(command));
 	if (result.code !== 0) throw new Error(`${command} ${args[0]} failed: ${result.stderr.trim() || result.stdout.trim() || `exit ${result.code}`}`);
 	return result.stdout;
 }
+
+/** Said when Pi is not running in a Herdr pane. `/split --help` never reaches this. */
+export const NOT_IN_HERDR = "/split needs Pi running in a pane of the Herdr app, and this terminal is not one. Start Pi from a Herdr pane; /split --help works anywhere";
+export const MISSING_TOOL = (command: string): string =>
+	`${command} was not found on your PATH. /split needs Herdr's command-line tools hc and herdr-app; no pane was split`;
 
 export async function resolveSplitParent(exec: Exec, cwd: string, env = process.env): Promise<SplitParent> {
 	const terminal = env.HC_TERMINAL_ID;
 	const legacy = env.HERDR_ENV === "1" ? env.HERDR_PANE_ID : undefined;
 	if (legacy && !terminal) return { backend: "legacy", pane: legacy };
-	if (!terminal) throw new Error("Split requires an interactive Herdr pane");
+	if (!terminal) throw new Error(NOT_IN_HERDR);
 	if (legacy) {
 		// Either multiplexer can be started inside the other and inherit its IDs.
 		const table = await run(exec, "ps", ["-axo", "pid=,ppid=,comm="], cwd);

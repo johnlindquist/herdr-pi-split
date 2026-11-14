@@ -12,7 +12,7 @@ import {
 	serializeConversation,
 	TreeSelectorComponent,
 } from "@earendil-works/pi-coding-agent";
-import { matchesKey, truncateToWidth, wrapTextWithAnsi } from "@earendil-works/pi-tui";
+import { matchesKey, Text, truncateToWidth, wrapTextWithAnsi } from "@earendil-works/pi-tui";
 import { appPaneCommand, openAppPane, resolveSplitParent, type SplitParent } from "./app-pane.ts";
 import { askHandoffFocus, installSplitGuidance, NAME_QUOTES, splitCompletions, splitHelp, SPLIT_USAGE } from "./guidance.ts";
 
@@ -37,6 +37,10 @@ const HANDOFF_PROMPT = readFileSync(new URL("./handoff.md", import.meta.url), "u
 export const SPLIT_NOTICE = readFileSync(new URL("./notice.md", import.meta.url), "utf8").trim();
 /** Custom entry type of the split notice, so it can be found on reload. */
 export const SPLIT_NOTICE_TYPE = "herdr-split-notice";
+/** Heading shown above the notice in the split's pane. */
+export const SPLIT_NOTICE_LABEL = "Split notice";
+/** The note beside /split in Pi's command menu. */
+export const SPLIT_DESCRIPTION = "Branch into a new Herdr pane from a message you pick. /split --help shows the guide.";
 
 /** End the split's context with the notice. Call again after anything that hides earlier entries (a handoff). */
 function appendSplitNotice(child: SessionManager): void {
@@ -746,7 +750,7 @@ export default function herdrSplitExtension(pi: ExtensionAPI): void {
 			return;
 		}
 		if (ctx.mode !== "tui") {
-			ctx.ui.notify("Split requires an interactive Herdr pane", "error");
+			ctx.ui.notify("/split opens a pane, so it needs an interactive Pi in a Herdr pane. /split --help works anywhere", "error");
 			return;
 		}
 		let request: SplitRequest;
@@ -804,8 +808,12 @@ export default function herdrSplitExtension(pi: ExtensionAPI): void {
 		}
 	};
 
+	// The split's pane shows the notice under a plain heading instead of its entry type.
+	pi.registerMessageRenderer(SPLIT_NOTICE_TYPE, (message, options, theme) =>
+		new Text(`${theme.fg("accent", SPLIT_NOTICE_LABEL)}\n${typeof message.content === "string" ? message.content : SPLIT_NOTICE}`, options.outputPad, 0));
+
 	pi.registerCommand("split", {
-		description: 'Continue from a message in a new Herdr pane. /split --help for examples.',
+		description: SPLIT_DESCRIPTION,
 		getArgumentCompletions: splitCompletions,
 		handler: (args, ctx) => splitIntoPane(ctx, args),
 	});

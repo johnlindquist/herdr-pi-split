@@ -158,3 +158,27 @@ describe("herdr-split notice", () => {
 		expect(texts.join("\n")).toContain("Review the tests");
 	});
 });
+
+describe("what Pi is given at load", () => {
+	test("one /split command with its menu note and completions, a shortcut, and a heading for the notice", async () => {
+		const { default: extension, SPLIT_DESCRIPTION, SPLIT_NOTICE_LABEL } = await import("../index.ts");
+		const commands: Record<string, { description?: string; getArgumentCompletions?: unknown }> = {};
+		const renderers: Record<string, (...args: any[]) => { render(width: number): string[] }> = {};
+		const shortcuts: string[] = [];
+		extension({
+			on: () => undefined,
+			registerCommand: (name: string, options: any) => { commands[name] = options; },
+			registerShortcut: (key: string) => { shortcuts.push(key); },
+			registerMessageRenderer: (type: string, renderer: any) => { renderers[type] = renderer; },
+		} as any);
+		expect(Object.keys(commands)).toEqual(["split"]);
+		expect(commands.split.description).toBe(SPLIT_DESCRIPTION);
+		expect(SPLIT_DESCRIPTION).toContain("/split --help");
+		expect(typeof commands.split.getArgumentCompletions).toBe("function");
+		expect(shortcuts).toEqual(["ctrl+shift+alt+f"]);
+		const shown = renderers[SPLIT_NOTICE_TYPE]({ content: SPLIT_NOTICE }, { outputPad: 1 }, { fg: (_color: string, text: string) => text }).render(400).join("\n");
+		expect(shown).toContain(SPLIT_NOTICE_LABEL);
+		expect(shown).toContain("Split from another conversation: avoid acting on prior turns.");
+		expect(shown).not.toContain(SPLIT_NOTICE_TYPE);
+	});
+});
