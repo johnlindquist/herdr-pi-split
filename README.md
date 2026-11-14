@@ -41,6 +41,18 @@ Without a name, the split is titled from your latest request on that branch.
 
 Set `HERDR_SPLIT_LAUNCHER` to start a different command than `pi`.
 
+## How it maps to the MEGA.dev lesson
+
+This is John Lindquist's own build of `/split` from MEGA.dev S04E01 ("Splitting Conversations, the Lab, and Your First Agents"). The lesson teaches you to build your own for whatever harness and workspace you use; this repository is the finished Pi and Herdr version to compare with. Its siblings are [`/lab`](https://github.com/johnlindquist/herdr-pi-lab), which grows and tests agents from the outside, and [`/agent`](https://github.com/johnlindquist/herdr-pi-role), which opens them beside Main.
+
+| In the lesson | Here |
+|---|---|
+| Pick which message to branch from; Main stays untouched | The picker is Pi's own tree selector, with its search and filters; the live session is never changed |
+| A new pane in the workspace that starts the harness on the branched session | `hc` splits the pane that runs this Pi and starts `pi --session <new file>` in the same directory |
+| A message at the end telling the agent it was split from a running conversation | `notice.md` |
+| Examples and ghost text: `/split ["name"] [handoff focus]` | The dim hint after the cursor, and the examples after a space |
+| `/split --help` prints the whole guide | The same |
+
 ## Tested
 
 In a real Pi 1.5.0 terminal: typing `/split` showed its usage hint, a space listed the five examples, **↓ Tab** inserted `"Test fixes"` with the hint `[optional handoff focus]`, and `/split --help` printed the guide. In an isolated Herdr 0.1.12 + Pi 1.5.0: `/split` + **Enter** opened a second Pi pane to the right, on a new session whose header links to the parent, with the conversation up to the chosen reply.
