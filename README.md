@@ -31,9 +31,13 @@ Then run `/reload` in Pi, or start Pi again. The install has no dependencies to 
 
 ## Walkthrough, in the video's order
 
-Do these in Main, the Pi conversation you are working in.
+Do these in Main, the Pi conversation you are working in. The pictures are real captures of a second Herdr window running Pi in a fresh clone of [RentAPlace](https://github.com/johnlindquist/rentaplace), with this extension installed from GitHub. The model's wording will differ on your machine.
 
 1. **Type `/split`.** Dim text appears after the cursor: `["name"] [handoff focus]`. Both parts are optional. The dim text is a hint; it never becomes part of the command.
+
+   ![Main with /split typed: dim text after the cursor reads ["name"] [handoff focus], then Space: examples and Enter: pick a message](docs/screenshots/split-hint.png)
+
+   The hint also tells you the two keys that matter next: **Space** for examples, **Enter** to pick a message.
 2. **Type a space.** A menu of examples opens. **↑/↓** moves, **Tab** inserts the example so you can edit it.
 3. **Type a name in quotes**, for example `/split "Calendar idea" `. The hint now shows what is left: `[handoff focus]`.
 4. **Run `/split --help`.** The whole guide prints in Main. No pane opens and the model is not called. It starts:
@@ -48,7 +52,15 @@ Do these in Main, the Pi conversation you are working in.
    ```
 
 5. **After you build or install it, run `/reload`**, then **run `/split`** and press **Enter**. The message search opens in the same pane, right where you ran `/split`. Type to filter the messages, for example `minimum`. The filter keys are listed at the top of the search; **ctrl+u** shows only your own messages.
+
+   ![The message search open inside Main's own pane: a Session Tree list of the conversation's messages with the newest reply selected, and the line Split from… Enter: split here · Shift+Enter: summarize · Esc: cancel](docs/screenshots/split-picker.png)
+
+   The search replaces the input of the pane you are in; no other pane opens yet. Every message of the conversation is a row, tool calls included, and the highlighted row is where the copy will stop. **Enter** copies the history up to that row. **Shift+Enter** starts the new pane from a short summary instead.
 6. **Press Enter on a message.** A new pane opens to the right with the conversation up to that message. Ask it anything.
+
+   ![Two panes side by side. Left, Main, ending with one dim line: Split opened in an adjacent Herdr pane. Right, the new pane with the copied reply and then the Split notice](docs/screenshots/split-done.png)
+
+   Left is Main: one dim line says the split opened, and nothing else changed. Right is the new conversation: the copied history, then the **Split notice** that tells its agent the earlier work belongs to the other conversation.
 
 ### What you should see
 
